@@ -1,27 +1,56 @@
-module event_ticket::event_ticket;
+module eventticket::event_ticket {
+    use sui::event;
+    use sui::object::{Self, UID};
+    use sui::tx_context::{Self, TxContext};
+    use std::ascii;
 
-use std::ascii;
-
-public struct EventTicket has key {
-    id: UID,
-    event_name: ascii::String,
-    seat_number: u64,
-    owner: address,
-}
-
-public fun create_ticket(
-    event_name: ascii::String,
-    seat_number: u64,
-    ctx: &mut TxContext,
-): EventTicket {
-    return EventTicket {
-        id: object::new(ctx),
-        event_name,
-        seat_number,
-        owner: tx_context::sender(ctx),
+    // Event when ticket is created or issued
+    public struct TicketEvent has key, store {
+        id: UID,
+        event_name: ascii::String,
+        seat_number: u64,
+        owner: address,
     }
-}
 
-public fun transfer_ticket(ticket: EventTicket, new_owner: address) {
-    transfer::transfer(ticket, new_owner);
+    // NEW: Event when ticket ownership changes
+    public struct TicketTransferEvent has key, store {
+        id: UID,
+        event_name: ascii::String,
+        seat_number: u64,
+        from: address,
+        to: address,
+    }
+
+    public fun emit_ticket_event(
+        event_name: ascii::String,
+        seat_number: u64,
+        owner: address,
+        ctx: &mut TxContext
+    ) {
+        let event = TicketEvent {
+            id: object::new(ctx),
+            event_name,
+            seat_number,
+            owner,
+        };
+        event::emit(event);
+    }
+
+    // NEW FUNCTION for transfer events
+    public fun emit_ticket_transfer_event(
+        event_name: ascii::String,
+        seat_number: u64,
+        from: address,
+        to: address,
+        ctx: &mut TxContext
+    ) {
+        let transfer_event = TicketTransferEvent {
+            id: object::new(ctx),
+            event_name,
+            seat_number,
+            from,
+            to,
+        };
+        event::emit(transfer_event);
+    }
 }
