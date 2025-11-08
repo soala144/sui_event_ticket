@@ -1,22 +1,27 @@
-module event_ticket::event_ticket {
-    use sui::event;
-    use std::ascii;
+module event_ticket::event_ticket;
 
-    public struct TicketEvent has copy, drop {
-        event_name: ascii::String,
-        seat_number: u64,
-        owner: address,
-    }
+use std::ascii;
 
-    public fun emit_ticket_event(
-        event_name: ascii::String,
-        seat_number: u64,
-        owner: address
-    ) {
-        event::emit(TicketEvent {
-            event_name,
-            seat_number,
-            owner,
-        });
+public struct EventTicket has key {
+    id: UID,
+    event_name: ascii::String,
+    seat_number: u64,
+    owner: address,
+}
+
+public fun create_ticket(
+    event_name: ascii::String,
+    seat_number: u64,
+    ctx: &mut TxContext,
+): EventTicket {
+    return EventTicket {
+        id: object::new(ctx),
+        event_name,
+        seat_number,
+        owner: tx_context::sender(ctx),
     }
+}
+
+public fun transfer_ticket(ticket: EventTicket, new_owner: address) {
+    transfer::transfer(ticket, new_owner);
 }
